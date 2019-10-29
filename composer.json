@@ -1,0 +1,24 @@
+{
+    "name" : "swango/db",
+    "license" : "Apache-2.0",
+    "keywords" : [
+        "php",
+        "swoole",
+        "rpc"
+    ],
+    "require": {
+        "swango/environment": "^1.0",
+        "swango/stdlib": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Swango\\Rpc\\Client\\": "src"
+        }
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer/"
+        }
+    }
+}

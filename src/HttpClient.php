@@ -7,7 +7,9 @@ abstract class HttpClient extends \BaseClient {
     protected $parameters;
     abstract protected function getServiceName(): string;
     abstract protected function getMethodName(): string;
-    public function setParameters(...$parameters): HttpClient {
+    public function setParameters($parameters): HttpClient {
+        if (! is_array($parameters) && ! is_object($parameters))
+            throw new \Exception('Only accept array or object');
         $this->parameters = $parameters;
         return $this;
     }

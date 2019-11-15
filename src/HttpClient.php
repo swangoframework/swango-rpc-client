@@ -63,8 +63,16 @@ abstract class HttpClient extends \BaseClient {
         try {
             $response = $this->recv();
         } catch(\Swlib\Http\Exception\ConnectException $e) {}
-        if ($response->statusCode !== 200)
+        if ($response->statusCode !== 200) {
+            if ($response->statusCode === 503) {
+                try {
+                    \Swango\Aliyun\Slb\Scene\FindServerByServerName::find($this->getServiceName());
+                }catch (\Swango\Aliyun\Slb\Exception\ServerNotAvailableException $e){
+                    throw new Exception\ServerClosedException();
+                }
+            }
             throw new Exception\ApiErrorException('Http status code: ' . $response->statusCode);
+        }
         $result_string = $response->__toString();
         try {
             $result_object = \Json::decodeAsObject($result_string);

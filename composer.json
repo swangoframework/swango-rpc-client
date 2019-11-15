@@ -8,7 +8,8 @@
     ],
     "require": {
         "swango/environment": "^1.0",
-        "swango/stdlib": "^1.2"
+        "swango/stdlib": "^1.2",
+        "swango/aliyun-slb": "^0.1.17"
     },
     "autoload": {
         "psr-4": {

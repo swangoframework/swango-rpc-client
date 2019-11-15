@@ -20,7 +20,7 @@ abstract class HttpClient extends \BaseClient {
             'error' => '\\Swango\\Rpc\\Client\\Exception\\ApiErrorException'
         ];
     }
-    protected function getParameters(): array {
+    protected function getParameters(): ?array {
         return $this->parameters;
     }
     protected function getVersion(): int {

@@ -58,6 +58,7 @@ abstract class HttpClient extends \BaseClient {
         $this->client->withBody($this->buildBody());
         $this->client->withHeader('Content-Type', \Swlib\Http\ContentType::JSON);
         $this->sendHttpRequest();
+        return $this;
     }
     public function getResult() {
         try {

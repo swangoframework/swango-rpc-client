@@ -74,7 +74,7 @@ abstract class HttpClient extends \BaseClient {
             }
             throw new Exception\ApiErrorException('Http status code: ' . $response->statusCode);
         }
-        $result_string = $response->__toString();
+        $result_string = $response->getBody()->__toString();
         try {
             $result_object = \Json::decodeAsObject($result_string);
         } catch(\JsonDecodeFailException $e) {

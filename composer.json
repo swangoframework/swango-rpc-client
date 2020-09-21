@@ -14,7 +14,7 @@
     },
     "autoload" : {
         "psr-4" : {
-            "Swango\\Rpc\\Client\\Exception" : "src/Exception"
+            "Swango\\Rpc\\Client\\Exception\\" : "src/Exception/"
         },
         "classmap" : [
             "src/Client.php"

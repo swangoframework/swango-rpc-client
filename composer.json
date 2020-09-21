@@ -6,21 +6,24 @@
         "swoole",
         "rpc"
     ],
-    "require": {
+    "require" : {
         "php" : ">=7.4",
-        "swango/environment": "^1.0",
-        "swango/stdlib": "^1.2",
-        "swango/aliyun-slb": "^0.1.17"
+        "swango/environment" : "^1.0",
+        "swango/stdlib" : "^1.2",
+        "swango/aliyun-slb" : "^0.1.17"
     },
-    "autoload": {
-        "psr-4": {
-            "Swango\\Rpc\\Client\\": "src"
-        }
+    "autoload" : {
+        "psr-4" : {
+            "Swango\\Rpc\\Client\\Exception" : "src/Exception"
+        },
+        "classmap" : [
+            "src/Client.php"
+        ]
     },
-    "repositories": {
-        "packagist": {
-            "type": "composer",
-            "url": "https://mirrors.aliyun.com/composer/"
+    "repositories" : {
+        "packagist" : {
+            "type" : "composer",
+            "url" : "https://mirrors.aliyun.com/composer/"
         }
     }
 }

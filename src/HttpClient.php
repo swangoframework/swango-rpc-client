@@ -2,14 +2,14 @@
 namespace Swango\Rpc\Client;
 use Swango\Environment;
 use function Swlib\Http\stream_for;
-
 abstract class HttpClient extends \BaseClient {
-    protected $parameters;
+    protected ?array $parameters = null;
+    private static array $uri_cache = [];
     abstract protected function getServiceName(): string;
-    abstract protected function getMethodName(): string;
     public function setParameters($parameters): HttpClient {
-        if (! is_array($parameters) && ! is_object($parameters))
+        if (! is_array($parameters) && ! is_object($parameters)) {
             throw new \Exception('Only accept array or object');
+        }
         $this->parameters = $parameters;
         return $this;
     }
@@ -23,6 +23,9 @@ abstract class HttpClient extends \BaseClient {
     protected function getParameters(): ?array {
         return $this->parameters;
     }
+    protected function getMethodName(): string {
+        return 'POST';
+    }
     protected function getVersion(): int {
         return 1;
     }
@@ -30,60 +33,68 @@ abstract class HttpClient extends \BaseClient {
         return Environment::getFrameworkConfig('rpc-centre');
     }
     protected function getUri(): \Swlib\Http\Uri {
-        [
-            'host' => $host,
-            'scheme' => $scheme,
-            'port' => $port
-        ] = $this->getConfig();
-        $uri = new \Swlib\Http\Uri();
-        $uri->withHost($host);
-        if (isset($scheme))
-            $uri->withScheme($scheme);
-        if (isset($port))
-            $uri->withPort($port);
-        $uri->withPath('/' . $this->getServiceName());
-        return $uri;
+        $service_name = $this->getServiceName();
+        if (! array_key_exists($service_name, self::$uri_cache)) {
+            [
+                'host' => $host,
+                'scheme' => $scheme,
+                'port' => $port
+            ] = $this->getConfig();
+            $uri = new \Swlib\Http\Uri();
+            $uri->withHost($host);
+            if (isset($scheme)) {
+                $uri->withScheme($scheme);
+            }
+            if (isset($port)) {
+                $uri->withPort($port);
+            }
+            $uri->withPath('/' . $service_name);
+            self::$uri_cache[$service_name] = $uri;
+            return $uri;
+        } else {
+            return self::$uri_cache[$service_name];
+        }
     }
     protected function buildBody(): \Psr\Http\Message\StreamInterface {
-        return stream_for(
-            \Json::encode(
-                [
-                    'm' => $this->getMethodName(),
-                    'v' => $this->getVersion(),
-                    'p' => $this->getParameters()
-                ]));
+        return stream_for(\Json::encode([
+            'm' => $this->getMethodName(),
+            'v' => $this->getVersion(),
+            'p' => $this->getParameters()
+        ]));
     }
-    public function send(): self {
+    public function sendHttpRequest(): \BaseClient {
         $this->makeClient($this->getUri());
         $this->client->withBody($this->buildBody());
         $this->client->withHeader('Content-Type', \Swlib\Http\ContentType::JSON);
-        $this->sendHttpRequest();
+        parent::sendHttpRequest();
         return $this;
     }
+    protected function handleErrorCode_503(): bool {
+        return true;
+    }
     public function getResult() {
-        try {
-            $response = $this->recv();
-        } catch(\Swlib\Http\Exception\ConnectException $e) {}
-        if ($response->statusCode !== 200) {
-            if ($response->statusCode === 503) {
-                try {
-                    \Swango\Aliyun\Slb\Scene\FindServerByServerName::find($this->getServiceName());
-                }catch (\Swango\Aliyun\Slb\Exception\ServerNotAvailableException $e){
-                    throw new Exception\ServerClosedException();
-                }
+        if (! $this->requestSent()) {
+            $this->sendHttpRequest();
+        }
+        $response = $this->recv();
+        if (503 === $response->statusCode) {
+            try {
+                \Swango\Aliyun\Slb\Scene\FindServerByServerName::find($this->getServiceName());
+                throw new Exception\ApiErrorException(static::class . ' api code error :503');
+            } catch (\Swango\Aliyun\Slb\Exception\ServerNotAvailableException $e) {
+                throw new Exception\ServerClosedException();
             }
-            throw new Exception\ApiErrorException('Http status code: ' . $response->statusCode);
         }
-        $result_string = $response->getBody()->__toString();
-        try {
-            $result_object = \Json::decodeAsObject($result_string);
-        } catch(\JsonDecodeFailException $e) {
-            throw new Exception\ApiErrorException('Json decode fail');
-        }
-        if (! isset($result_object->code) || ! isset($result_object->enmsg) || ! isset($result_object->cnmsg))
+        $result_object = \Json::decodeAsObject($response->body);
+        if (! isset($result_object->code) || ! isset($result_object->enmsg) || ! isset($result_object->cnmsg)) {
             throw new Exception\ApiErrorException('Invalid response format');
-        if ($result_object->code !== 200 || $result_object->enmsg !== 'ok')
+        }
+        if (isset($result_object->data) && ! is_object($result_object->data)) {
+            throw new Exception\ApiErrorException('Invalid response format');
+        }
+        if (200 !== $result_object->code || 'ok' !== $result_object->enmsg) {
             throw new Exception\ApiErrorException("[$result_object->code] $result_object->enmsg $result_object->cnmsg");
+        }
         return $result_object->data ?? null;
     }
 }

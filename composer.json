@@ -7,6 +7,7 @@
         "rpc"
     ],
     "require": {
+        "php" : ">=7.4",
         "swango/environment": "^1.0",
         "swango/stdlib": "^1.2",
         "swango/aliyun-slb": "^0.1.17"

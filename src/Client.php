@@ -6,6 +6,11 @@ abstract class Client extends \BaseClient {
     protected ?array $parameters = null;
     private static array $uri_cache = [];
     abstract protected function getServiceName(): string;
+    /**
+     * served as url inc rpc server
+     * @return string
+     */
+    abstract protected function getMethodName(): string;
     public function setParameters($parameters): Client {
         if (! is_array($parameters) && ! is_object($parameters)) {
             throw new \Exception('Only accept array or object');
@@ -22,9 +27,6 @@ abstract class Client extends \BaseClient {
     }
     protected function getParameters(): ?array {
         return $this->parameters;
-    }
-    protected function getMethodName(): string {
-        return 'POST';
     }
     protected function getVersion(): int {
         return 1;

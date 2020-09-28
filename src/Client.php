@@ -68,6 +68,8 @@ abstract class Client extends \BaseClient {
         $this->makeClient($this->getUri());
         $this->client->withBody($this->buildBody());
         $this->client->withHeader('Content-Type', \Swlib\Http\ContentType::JSON);
+        $this->client->withoutHeader('Accept');
+        $this->client->withoutHeader('Accept-Encoding');
         parent::sendHttpRequest();
         return $this;
     }

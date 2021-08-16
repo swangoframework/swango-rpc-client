@@ -11,11 +11,19 @@ abstract class Client extends \BaseClient {
      * @return string
      */
     abstract protected function getMethodName(): string;
-    public function setParameters($parameters): Client {
-        if (! is_array($parameters) && ! is_object($parameters)) {
-            throw new \Exception('Only accept array or object');
+    public function setParameters(array|object $parameters): Client {
+        $this->parameters = (array)$parameters;
+        return $this;
+    }
+    public function withParameter(string $key, mixed $parameter): Client {
+        $this->parameters ??= [];
+        $this->parameters[$key] = $parameter;
+        return $this;
+    }
+    public function withoutParameter(string $key): Client {
+        if (isset($this->parameters) && isset($this->parameters[$key])) {
+            unset($this->parameters[$key]);
         }
-        $this->parameters = $parameters;
         return $this;
     }
     protected function getExceptionName(): array {
@@ -82,12 +90,7 @@ abstract class Client extends \BaseClient {
         }
         $response = $this->recv();
         if (503 === $response->statusCode) {
-            try {
-                \Swango\Aliyun\Slb\Scene\FindServerByServerName::find($this->getServiceName());
-                throw new Client\Exception\ApiErrorException(static::class . ' api code error :503');
-            } catch (\Swango\Aliyun\Slb\Exception\ServerNotAvailableException $e) {
-                throw new Client\Exception\ServerClosedException();
-            }
+            throw new Client\Exception\ServerClosedException();
         }
         $result_object = \Json::decodeAsObject($response->body);
         if (! isset($result_object->code) || ! isset($result_object->enmsg) || ! isset($result_object->cnmsg)) {
@@ -97,7 +100,11 @@ abstract class Client extends \BaseClient {
             throw new Client\Exception\ApiErrorException('Invalid response format');
         }
         if (200 !== $result_object->code || 'ok' !== $result_object->enmsg) {
-            throw new Client\Exception\ApiErrorException("[$result_object->code] $result_object->enmsg $result_object->cnmsg");
+            if (Environment::getSwangoModuleSeeker()->swangoModelExists()) {
+                throw new \ExceptionToResponse($result_object->enmsg, $result_object->cnmsg, $result_object->code);
+            } else {
+                throw new Client\Exception\ApiErrorException("[$result_object->code] $result_object->enmsg $result_object->cnmsg");
+            }
         }
         return $result_object->data ?? null;
     }

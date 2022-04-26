@@ -9,7 +9,7 @@
     "require" : {
         "php" : ">=8.0",
         "swango/environment" : "^1.0",
-        "swango/stdlib" : "^1.2",
+        "swango/stdlib" : "^1.0",
         "swango/aliyun-slb" : "^1.0"
     },
     "autoload" : {
